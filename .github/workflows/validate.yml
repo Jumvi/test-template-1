@@ -96,6 +96,142 @@ jobs:
           fi
           echo "" >> feedback.md
 
+      - name: Analyze validation errors and provide solutions
+        run: |
+          echo "## 🔧 Solutions aux erreurs de validation détectées :" >> feedback.md
+          echo "" >> feedback.md
+          
+          html_files=$(find . -name "*.html" -not -path "./.git/*")
+          solutions_provided=false
+          
+          for file in $html_files; do
+            # Analyser le contenu pour détecter des problèmes spécifiques
+            
+            # 1. Images sans alt
+            if grep -q '<img[^>]*>' "$file" && ! grep -q '<img[^>]*alt=' "$file"; then
+              echo "### ♿ **Erreur d'accessibilité : Images sans attribut alt**" >> feedback.md
+              echo "" >> feedback.md
+              echo "**Problème détecté :** \`<img>\` sans attribut \`alt\`" >> feedback.md
+              echo "" >> feedback.md
+              echo "**Solution :**" >> feedback.md
+              echo '```html' >> feedback.md
+              echo "<!-- ❌ Erreur actuelle -->" >> feedback.md
+              grep -o '<img[^>]*>' "$file" | head -1 >> feedback.md
+              echo "" >> feedback.md
+              echo "<!-- ✅ Correction -->" >> feedback.md
+              img_line=$(grep -o '<img[^>]*>' "$file" | head -1)
+              corrected_img=$(echo "$img_line" | sed 's/>/ alt="Description de l'\''image">/')
+              echo "$corrected_img" >> feedback.md
+              echo '```' >> feedback.md
+              echo "" >> feedback.md
+              solutions_provided=true
+            fi
+            
+            # 2. Balises non fermées
+            if grep -q '<p>' "$file"; then
+              # Vérifier s'il y a des <p> potentiellement non fermés
+              p_open=$(grep -c '<p>' "$file" 2>/dev/null || echo "0")
+              p_close=$(grep -c '</p>' "$file" 2>/dev/null || echo "0")
+              if [ "$p_open" -gt "$p_close" ]; then
+                echo "### 🔗 **Erreur de structure : Balise \`<p>\` non fermée**" >> feedback.md
+                echo "" >> feedback.md
+                echo "**Problème détecté :** Balise \`<p>\` ouverte mais pas fermée correctement" >> feedback.md
+                echo "" >> feedback.md
+                echo "**Solution :** Ajouter la balise de fermeture \`</p>\`" >> feedback.md
+                echo '```html' >> feedback.md
+                echo "<!-- ❌ Erreur -->" >> feedback.md
+                echo "<p>" >> feedback.md
+                echo "  Votre texte..." >> feedback.md
+                echo "<!-- Pas de fermeture -->" >> feedback.md
+                echo "" >> feedback.md
+                echo "<!-- ✅ Correction -->" >> feedback.md
+                echo "<p>" >> feedback.md
+                echo "  Votre texte..." >> feedback.md
+                echo "</p>" >> feedback.md
+                echo '```' >> feedback.md
+                echo "" >> feedback.md
+                solutions_provided=true
+              fi
+            fi
+            
+            # 3. Balises li non fermées
+            if grep -q '<li>' "$file"; then
+              li_open=$(grep -c '<li>' "$file" 2>/dev/null || echo "0")
+              li_close=$(grep -c '</li>' "$file" 2>/dev/null || echo "0")
+              if [ "$li_open" -gt "$li_close" ]; then
+                echo "### 📝 **Erreur de liste : Balise \`<li>\` non fermée**" >> feedback.md
+                echo "" >> feedback.md
+                echo "**Problème détecté :** Élément de liste sans balise de fermeture" >> feedback.md
+                echo "" >> feedback.md
+                echo "**Solution :** Ajouter \`</li>\` à chaque élément" >> feedback.md
+                echo '```html' >> feedback.md
+                echo "<!-- ❌ Erreur -->" >> feedback.md
+                echo "<ul>" >> feedback.md
+                echo "  <li>Premier élément" >> feedback.md
+                echo "  <li>Deuxième élément</li>" >> feedback.md
+                echo "</ul>" >> feedback.md
+                echo "" >> feedback.md
+                echo "<!-- ✅ Correction -->" >> feedback.md
+                echo "<ul>" >> feedback.md
+                echo "  <li>Premier élément</li>" >> feedback.md
+                echo "  <li>Deuxième élément</li>" >> feedback.md
+                echo "</ul>" >> feedback.md
+                echo '```' >> feedback.md
+                echo "" >> feedback.md
+                solutions_provided=true
+              fi
+            fi
+            
+            # 4. Balises blockquote non fermées
+            if grep -q '<blockquote>' "$file"; then
+              bq_open=$(grep -c '<blockquote>' "$file" 2>/dev/null || echo "0")
+              bq_close=$(grep -c '</blockquote>' "$file" 2>/dev/null || echo "0")
+              if [ "$bq_open" -gt "$bq_close" ]; then
+                echo "### 💬 **Erreur de citation : Balise \`<blockquote>\` non fermée**" >> feedback.md
+                echo "" >> feedback.md
+                echo "**Problème détecté :** Citation ouverte mais pas fermée" >> feedback.md
+                echo "" >> feedback.md
+                echo "**Solution :** Ajouter \`</blockquote>\` avant la fermeture du conteneur" >> feedback.md
+                echo '```html' >> feedback.md
+                echo "<!-- ❌ Erreur -->" >> feedback.md
+                echo "<footer>" >> feedback.md
+                echo "  <blockquote>" >> feedback.md
+                echo "    \"Votre citation...\"" >> feedback.md
+                echo "  <!-- Manque </blockquote> -->" >> feedback.md
+                echo "</footer>" >> feedback.md
+                echo "" >> feedback.md
+                echo "<!-- ✅ Correction -->" >> feedback.md
+                echo "<footer>" >> feedback.md
+                echo "  <blockquote>" >> feedback.md
+                echo "    \"Votre citation...\"" >> feedback.md
+                echo "  </blockquote>" >> feedback.md
+                echo "</footer>" >> feedback.md
+                echo '```' >> feedback.md
+                echo "" >> feedback.md
+                solutions_provided=true
+              fi
+            fi
+            
+            # 5. Espaces en fin de ligne
+            if grep -q '[[:space:]]$' "$file"; then
+              echo "### 🧹 **Problème de formatage : Espaces en fin de ligne**" >> feedback.md
+              echo "" >> feedback.md
+              echo "**Problème détecté :** Espaces inutiles à la fin des lignes" >> feedback.md
+              echo "" >> feedback.md
+              echo "**Solution :** Supprimer les espaces en fin de ligne" >> feedback.md
+              echo "- Dans VS Code : Rechercher avec regex \`[[:space:]]+$\` et remplacer par rien" >> feedback.md
+              echo "- Ou configurer VS Code pour supprimer automatiquement les espaces" >> feedback.md
+              echo "" >> feedback.md
+              solutions_provided=true
+            fi
+          done
+          
+          if [ "$solutions_provided" = false ]; then
+            echo "✅ **Aucune erreur de validation spécifique détectée !**" >> feedback.md
+            echo "Votre code HTML semble bien structuré." >> feedback.md
+          fi
+          echo "" >> feedback.md
+
       - name: Analyze HTML code quality
         run: |
           echo "## Analyse de la qualité du code :" >> feedback.md
@@ -247,49 +383,69 @@ jobs:
       - name: Add pedagogical feedback with code examples
         run: |
           cat >> feedback.md << 'EOF'
-          ## 📚 Conseils pédagogiques avec exemples de code :
+          ## 📚 Guide de résolution des erreurs courantes :
           
-          ### 🔧 **Solutions aux erreurs courantes** :
+          ### 🎯 **Erreurs fréquentes et leurs solutions** :
           
-          #### Balises non fermées
-          ```html
-          <!-- ❌ Problème -->
-          <p>Texte sans fermeture
-          
-          <!-- ✅ Solution -->
-          <p>Texte avec fermeture correcte</p>
-          ```
-          
-          #### Images sans attribut alt
+          #### 1. Erreur `wcag/h37` - Images sans attribut alt
+          **Cause :** L'attribut `alt` est obligatoire pour l'accessibilité
           ```html
           <!-- ❌ Problème -->
           <img src="image.jpg">
           
           <!-- ✅ Solution -->
-          <img src="image.jpg" alt="Description claire de l'image">
+          <img src="image.jpg" alt="Nelson Mandela souriant en 2008">
           ```
           
-          #### Structure sémantique améliorée
+          #### 2. Erreur `no-implicit-close` - Balises non fermées
+          **Cause :** HTML5 ferme automatiquement certaines balises, mais c'est une mauvaise pratique
           ```html
-          <!-- ❌ Peu sémantique -->
-          <div class="header">
-            <div class="title">Mon Site</div>
-          </div>
+          <!-- ❌ Problème -->
+          <p>Texte
+          <h2>Titre</h2>
           
-          <!-- ✅ Structure sémantique -->
-          <header>
-            <h1>Mon Site</h1>
-          </header>
+          <!-- ✅ Solution -->
+          <p>Texte</p>
+          <h2>Titre</h2>
           ```
           
-          ### 💡 **Bonnes pratiques recommandées** :
+          #### 3. Erreur `close-order` - Ordre de fermeture incorrect
+          **Cause :** Les balises doivent être fermées dans l'ordre inverse d'ouverture
+          ```html
+          <!-- ❌ Problème -->
+          <footer>
+            <blockquote>
+              Citation...
+          </footer> <!-- blockquote jamais fermé -->
           
-          - **Toujours** inclure un DOCTYPE HTML5
-          - **Toujours** spécifier l'attribut `lang` sur la balise `<html>`
-          - **Toujours** ajouter des attributs `alt` descriptifs aux images
-          - **Utiliser** des balises sémantiques (`<header>`, `<main>`, `<footer>`, etc.)
-          - **Éviter** les balises obsolètes (`<font>`, `<center>`, etc.)
-          - **Séparer** le contenu (HTML) de la présentation (CSS)
+          <!-- ✅ Solution -->
+          <footer>
+            <blockquote>
+              Citation...
+            </blockquote>
+          </footer>
+          ```
+          
+          #### 4. Erreur `no-trailing-whitespace` - Espaces en fin de ligne
+          **Cause :** Espaces inutiles à la fin des lignes
+          **Solution :** Configurez votre éditeur pour supprimer automatiquement ces espaces
+          
+          ### 💡 **Conseils pour éviter ces erreurs** :
+          
+          - **Utilisez un éditeur avec coloration syntaxique** (VS Code, Sublime Text, etc.)
+          - **Activez l'auto-completion HTML** pour les balises de fermeture
+          - **Installez des extensions** comme "Auto Close Tag" dans VS Code
+          - **Utilisez l'indentation** pour visualiser la structure
+          - **Validez régulièrement** votre code pendant le développement
+          
+          ### 🔧 **Configuration VS Code recommandée** :
+          ```json
+          {
+            "files.trimTrailingWhitespace": true,
+            "editor.formatOnSave": true,
+            "html.autoClosingTags": true
+          }
+          ```
           
           EOF
 
