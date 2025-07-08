@@ -2,7 +2,6 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hommage à Nelson Mandela</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -17,35 +16,31 @@
   <!-- Section principale -->
   <main>
     <figure>
-      <img src="https://upload.wikimedia.org/wikipedia/commons/0/0d/Nelson_Mandela-2008_%28edit%29.jpg" alt="Portrait de Nelson Mandela" width="300">
+      <img src="image.jpg"> <!-- 🔴 Erreur : pas d’attribut alt -->
       <figcaption>Nelson Mandela en 2008</figcaption>
     </figure>
 
     <section>
       <p>
-        Nelson Mandela (1918–2013) fut un homme politique sud-africain emblématique, connu pour sa lutte contre l'apartheid.
-        Emprisonné pendant 27 ans, il est devenu le premier président noir d'Afrique du Sud et a marqué l'histoire par son engagement pour la réconciliation nationale.
-      </p>
+        Nelson Mandela fut un homme politique emblématique, connu pour sa lutte contre l'apartheid.
+      <!-- 🔴 Erreur : balise <p> non fermée -->
 
       <h2>Accomplissements majeurs :</h2>
       <ul>
-        <li>Leader de la lutte contre l'apartheid</li>
-        <li>Emprisonné pendant 27 ans pour ses convictions</li>
-        <li>Prix Nobel de la paix en 1993</li>
-        <li>Premier président noir d'Afrique du Sud (1994–1999)</li>
-        <li>Fondateur de la Fondation Nelson Mandela</li>
+        <li>Prix Nobel de la paix en 1993
+        <li>Premier président noir d'Afrique du Sud</li>
+        <!-- 🔴 Erreur : un <li> sans fermeture explicite -->
       </ul>
     </section>
   </main>
 
-  <!-- Pied de page -->
   <footer>
     <blockquote>
-      "Être libre, ce n'est pas seulement se débarrasser de ses chaînes, c'est vivre d'une manière qui respecte et renforce la liberté des autres." – Nelson Mandela
+      "Être libre, ce n'est pas seulement se débarrasser de ses chaînes..." – Nelson Mandela
     </blockquote>
     <p>
-      En savoir plus sur <a href="https://fr.wikipedia.org/wiki/Nelson_Mandela" target="_blank">Nelson Mandela sur Wikipedia</a>.
-    /p>
+      En savoir plus sur <a href="https://fr.wikipedia.org/wiki/Nelson_Mandela">Wikipedia</a>.
+    </p>
   </footer>
 
 </body>
