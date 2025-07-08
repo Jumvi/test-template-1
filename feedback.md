@@ -5,73 +5,13 @@
 📁 **Fichiers HTML analysés** :
 - ./index.html
 
-⚠️ **Erreurs dans ./index.html** :
-```
-
-/home/runner/work/test-template-1/test-template-1/index.html
-  19:8   error  <img> is missing required "alt" attribute          wcag/h37
-  24:8   error  Element <p> is implicitly closed by adjacent <h2>  no-implicit-close
-  30:10  error  Element <li> is implicitly closed by sibling       no-implicit-close
-
-✖ 3 problems (3 errors, 0 warnings)
-
-More information:
-  https://html-validate.org/rules/wcag/h37.html
-  https://html-validate.org/rules/no-implicit-close.html
-
-```
+✅ **Aucune erreur de validation HTML détectée !**
+Votre code HTML semble correct.
 
 ## 🔧 Solutions aux erreurs de validation détectées :
 
-### ♿ **Erreur d'accessibilité : Images sans attribut alt**
-
-**Problème détecté :** `<img>` sans attribut `alt`
-
-**Solution :**
-```html
-<!-- ❌ Erreur actuelle -->
-<img src="image.jpg">
-
-<!-- ✅ Correction -->
-<img src="image.jpg" alt="Description de l'image">
-```
-
-### 🔗 **Erreur de structure : Balise `<p>` non fermée**
-
-**Problème détecté :** Balise `<p>` ouverte mais pas fermée correctement
-
-**Solution :** Ajouter la balise de fermeture `</p>`
-```html
-<!-- ❌ Erreur -->
-<p>
-  Votre texte...
-<!-- Pas de fermeture -->
-
-<!-- ✅ Correction -->
-<p>
-  Votre texte...
-</p>
-```
-
-### 📝 **Erreur de liste : Balise `<li>` non fermée**
-
-**Problème détecté :** Élément de liste sans balise de fermeture
-
-**Solution :** Ajouter `</li>` à chaque élément
-```html
-<!-- ❌ Erreur -->
-<ul>
-  <li>Premier élément
-  <li>Deuxième élément</li>
-</ul>
-
-<!-- ✅ Correction -->
-<ul>
-  <li>Premier élément</li>
-  <li>Deuxième élément</li>
-</ul>
-```
-
+✅ **Aucune erreur de validation spécifique détectée !**
+Votre code HTML semble bien structuré.
 
 ## Analyse de la qualité du code :
 
@@ -88,7 +28,6 @@ More information:
 - ✅ Titre de page défini
 
 #### ⚠️ **Points à améliorer** :
-- ⚠️ Images sans attribut alt détectées
 - ⚠️ Balise obsolète détectée : `<b>` (utiliser CSS à la place)
 - ⚠️ Balise obsolète détectée : `<i>` (utiliser CSS à la place)
 - ⚠️ Balise obsolète détectée : `<u>` (utiliser CSS à la place)
@@ -97,14 +36,12 @@ More information:
 ## Vérification détaillée des images :
 
 🖼️ **Images dans ./index.html** :
-  ❌ **Image sans attribut alt** : `<img src="image.jpg">`
-    💡 **Suggestion** : Ajouter `alt="Description de l'image"`
+  ✅ Image avec attribut alt : `<img src="https://upload.wikimedia.org/wikipedia/commons/d/d2/Dr._Norman_Borlaug.jpg" alt="Portrait de Norman Borlaug" width="300">`
 
 
 ## 💡 Recommandations personnalisées :
 
 ### Actions prioritaires :
-- ♿ **Urgent** : Ajouter des attributs `alt` aux images dans `./index.html`
 - 📱 **Recommandé** : Ajouter la meta viewport dans `./index.html` pour le responsive
 
 
