@@ -336,15 +336,17 @@ jobs:
               images_found=true
               echo "🖼️ **Images dans $file** :" >> feedback.md
               
-              # Extraire toutes les balises img
-              grep -o '<img[^>]*>' "$file" | while IFS= read -r img_tag; do
+              # Extraire toutes les balises img et les traiter
+              grep -o '<img[^>]*>' "$file" > img_temp.txt
+              while IFS= read -r img_tag; do
                 if echo "$img_tag" | grep -q 'alt='; then
                   echo "  ✅ Image avec attribut alt : \`$img_tag\`" >> feedback.md
                 else
                   echo "  ❌ **Image sans attribut alt** : \`$img_tag\`" >> feedback.md
                   echo "    💡 **Suggestion** : Ajouter \`alt=\"Description de l'image\"\`" >> feedback.md
                 fi
-              done
+              done < img_temp.txt
+              rm -f img_temp.txt
               echo "" >> feedback.md
             fi
           done
@@ -382,6 +384,9 @@ jobs:
 
       - name: Pedagogical evaluation and grading
         run: |
+          echo "" >> feedback.md
+          echo "---" >> feedback.md
+          echo "" >> feedback.md
           echo "# 🎓 Évaluation Pédagogique - Exercice Norman Borlaug" >> feedback.md
           echo "" >> feedback.md
           echo "## 📋 Analyse du travail rendu :" >> feedback.md
