@@ -535,15 +535,19 @@ jobs:
               echo ""
             } >> feedback.md
 
-            if grep -q "<section> && <h[2-6]>" "$file"; then
-              echo "✅ Utilisation de \`<section>\` et \`<h2>\` ou \`<h3>\` ou \`<h4>\` ou \`<h5>\` ou \`<h6>\`" >> feedback.md
-              semantic_count=$((semantic_count + 3))
+            if grep -q "<section>" "$file" && grep -q "<h[2-6]>" "$file"; then
+              # Vérifier si les titres sont bien dans des sections
+              sections_with_titles=$(grep -c "<section>" "$file" 2>/dev/null || echo "0")
+              if [ "$sections_with_titles" -gt 0 ]; then
+                echo "✅ Excellente utilisation de \`<section>\` avec titres hiérarchiques" >> feedback.md
+                semantic_count=$((semantic_count + 3))
+              fi
             fi
-            if grep -q "<div> && <h[2-6]>" "$file"; then
+            if grep -q "<div>" "$file" && grep -q "<h[2-6]>" "$file"; then
               echo "❌ Mauvaise utilisation de \`<div>\` et \`<h2>\` ou \`<h3>\` ou \`<h4>\` ou \`<h5>\` ou \`<h6>\` avec les titres, les titres ne peuvent se retrouver que dans une section pas dans <div>" >> feedback.md
               semantic_count=$((semantic_count - 2))
             fi
-            if grep -q "<article> && <h[2-6]>" "$file"; then
+            if grep -q "<article>" "$file" && grep -q "<h[2-6]>" "$file"; then
               echo "✅ Utilisation de \`<article>\` et \`<h2>\` ou \`<h3>\` ou \`<h4>\` ou \`<h5>\` ou \`<h6>\`" >> feedback.md
               semantic_count=$((semantic_count + 1))
             fi
