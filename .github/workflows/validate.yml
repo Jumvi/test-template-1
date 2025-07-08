@@ -36,21 +36,22 @@ jobs:
           
           # Chercher tous les fichiers HTML
           html_files=$(find . -name "*.html" -not -path "./.git/*")
+          validation_score=0
           if [ -z "$html_files" ]; then
             echo "❌ Aucun fichier HTML trouvé dans le repository." >> feedback.md
+            validation_score=0
           else
             echo "📁 **Fichiers HTML analysés** :" >> feedback.md
             for file in $html_files; do
               echo "- $file" >> feedback.md
             done
             echo "" >> feedback.md
-            
-            # Debug: vérifier que html-validate est installé
+            total_errors=0
+
+             # Debug: vérifier que html-validate est installé
             echo "Debug: Vérification de html-validate..."
             if command -v html-validate >/dev/null 2>&1; then
               echo "Debug: html-validate trouvé, utilisation..."
-              # Analyser chaque fichier individuellement pour éviter les problèmes
-              validation_errors=false
               for file in $html_files; do
                 echo "Debug: Analyse de $file avec html-validate..."
                 if html-validate "$file" > "validation_${file##*/}.tmp" 2>&1; then
@@ -59,20 +60,22 @@ jobs:
                     echo '```' >> feedback.md
                     cat "validation_${file##*/}.tmp" >> feedback.md
                     echo '```' >> feedback.md
-                    validation_errors=true
+                    # Compter les erreurs dans ce fichier
+                    file_errors=$(grep -c "error\|Error\|ERROR" "validation_${file##*/}.tmp" 2>/dev/null || echo "1")
+                    total_errors=$((total_errors + file_errors))
                   fi
                 else
                   echo "⚠️ **Erreurs dans $file** :" >> feedback.md
                   echo '```' >> feedback.md
                   cat "validation_${file##*/}.tmp" >> feedback.md
                   echo '```' >> feedback.md
-                  validation_errors=true
+                  file_errors=$(grep -c "error\|Error\|ERROR" "validation_${file##*/}.tmp" 2>/dev/null || echo "1")
+                  total_errors=$((total_errors + file_errors))
                 fi
                 rm -f "validation_${file##*/}.tmp"
               done
             elif command -v htmlhint >/dev/null 2>&1; then
               echo "Debug: html-validate non trouvé, utilisation de htmlhint..."
-              validation_errors=false
               for file in $html_files; do
                 echo "Debug: Analyse de $file avec htmlhint..."
                 if ! htmlhint "$file" > "validation_${file##*/}.tmp" 2>&1; then
@@ -80,19 +83,50 @@ jobs:
                   echo '```' >> feedback.md
                   cat "validation_${file##*/}.tmp" >> feedback.md
                   echo '```' >> feedback.md
-                  validation_errors=true
+                  file_errors=$(grep -c "error\|Error\|ERROR" "validation_${file##*/}.tmp" 2>/dev/null || echo "1")
+                  total_errors=$((total_errors + file_errors))
                 fi
                 rm -f "validation_${file##*/}.tmp"
               done
             else
               echo "⚠️ **Validation basique** : Aucun validateur HTML installé" >> feedback.md
-              validation_errors=false
+              total_errors=0
             fi
             
-            if [ "$validation_errors" = false ]; then
+            # Vérifications manuelles supplémentaires
+            for file in $html_files; do
+              # Vérifier images sans alt
+              if grep -q '<img' "$file" && ! grep -q '<img[^>]*alt=' "$file"; then
+                total_errors=$((total_errors + 1))
+              fi
+              
+              # Vérifier balises non fermées
+              if grep -q '<p>' "$file"; then
+                p_open=$(grep -c '<p>' "$file" 2>/dev/null || echo "0")
+                p_close=$(grep -c '</p>' "$file" 2>/dev/null || echo "0")
+                if [ "$p_open" -gt "$p_close" ]; then
+                  total_errors=$((total_errors + 1))
+                fi
+              fi
+            done
+            
+            # Calculer le score final de validation
+            if [ "$total_errors" -eq 0 ]; then
+              validation_score=3
               echo "✅ **Aucune erreur de validation HTML détectée !**" >> feedback.md
               echo "Votre code HTML semble correct." >> feedback.md
+            elif [ "$total_errors" -le 2 ]; then
+              validation_score=2
+              echo "⚠️ **Quelques erreurs de validation détectées** (Score: 2/3)" >> feedback.md
+              echo "Votre code contient $total_errors erreur(s)." >> feedback.md
+            else
+              validation_score=1
+              echo "❌ **Plusieurs erreurs de validation détectées** (Score: 1/3)" >> feedback.md
+              echo "Votre code contient $total_errors erreur(s)." >> feedback.md
             fi
+            
+            # Sauvegarder le score dans un fichier pour les étapes suivantes
+            echo "$validation_score" > validation_score.tmp
           fi
           echo "" >> feedback.md
 
@@ -482,7 +516,7 @@ jobs:
             
             # Vérifier blockquote + lien
             if grep -q "<blockquote>" "$file" && grep -q "<a.*href.*>" "$file"; then
-              echo "✅ Citation (\`<blockquote>\`) et lien externe présents (+1 point)" >> feedback.md
+              echo "✅ Citation (\`<blockquote>\` ou \`<cite>\`  ) et lien externe présents (+1 point)" >> feedback.md
               elements_score=$((elements_score + 1))
             else
               echo "❌ Citation ou lien externe manquant (0 point)" >> feedback.md
@@ -500,23 +534,24 @@ jobs:
               echo "### 🏷️ **Critère 3 : Balises sémantiques** (/3 points)"
               echo ""
             } >> feedback.md
-            
-            if grep -q "<section>" "$file"; then
-              echo "✅ Utilisation de \`<section>\`" >> feedback.md
-              semantic_count=$((semantic_count + 1))
+
+            if grep -q "<section> && <h[2-6]>" "$file"; then
+              echo "✅ Utilisation de \`<section>\` et \`<h2>\` ou \`<h3>\` ou \`<h4>\` ou \`<h5>\` ou \`<h6>\`" >> feedback.md
+              semantic_count=$((semantic_count + 3))
             fi
-            if grep -q "<article>" "$file"; then
-              echo "✅ Utilisation de \`<article>\`" >> feedback.md
+            if grep -q "<div> && <h[2-6]>" "$file"; then
+              echo "❌ Mauvaise utilisation de \`<div>\` et \`<h2>\` ou \`<h3>\` ou \`<h4>\` ou \`<h5>\` ou \`<h6>\` avec les titres, les titres ne peuvent se retrouver que dans une section pas dans <div>" >> feedback.md
+              semantic_count=$((semantic_count - 2))
+            fi
+            if grep -q "<article> && <h[2-6]>" "$file"; then
+              echo "✅ Utilisation de \`<article>\` et \`<h2>\` ou \`<h3>\` ou \`<h4>\` ou \`<h5>\` ou \`<h6>\`" >> feedback.md
               semantic_count=$((semantic_count + 1))
             fi
             if grep -q "<nav>" "$file"; then
               echo "✅ Utilisation de \`<nav>\`" >> feedback.md
-              semantic_count=$((semantic_count + 1))
+              semantic_count=$((semantic_count + 0))
             fi
-            if grep -q "<aside>" "$file"; then
-              echo "✅ Utilisation de \`<aside>\`" >> feedback.md
-              semantic_count=$((semantic_count + 1))
-            fi
+            
             
             # Attribution des points
             if [ "$semantic_count" -ge 3 ]; then
