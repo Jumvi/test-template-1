@@ -1,0 +1,269 @@
+name: Validate HTML
+
+on:
+  push:
+    paths:
+      - '**.html'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install HTML validator
+        run: |
+          npm install -g html-validate
+
+      - name: Run HTML validation
+        run: |
+          echo "# Feedback Automatisé" > feedback.md
+          echo "" >> feedback.md
+          echo "## Résultats de la validation HTML :" >> feedback.md
+          echo "" >> feedback.md
+          
+          # Chercher tous les fichiers HTML
+          html_files=$(find . -name "*.html" -not -path "./.git/*")
+          if [ -z "$html_files" ]; then
+            echo "❌ Aucun fichier HTML trouvé dans le repository." >> feedback.md
+          else
+            echo "📁 **Fichiers HTML analysés** :" >> feedback.md
+            for file in $html_files; do
+              echo "- $file" >> feedback.md
+            done
+            echo "" >> feedback.md
+            
+            # Exécuter html-validate et capturer la sortie
+            html-validate $html_files --format=markdown > validation_output.tmp 2>&1
+            validation_exit_code=$?
+            
+            if [ $validation_exit_code -eq 0 ] && [ ! -s validation_output.tmp ]; then
+              echo "✅ **Aucune erreur de validation HTML détectée !**" >> feedback.md
+              echo "Votre code HTML respecte les standards W3C." >> feedback.md
+            else
+              echo "⚠️ **Erreurs de validation HTML détectées** :" >> feedback.md
+              echo "" >> feedback.md
+              if [ -s validation_output.tmp ]; then
+                cat validation_output.tmp >> feedback.md
+              fi
+            fi
+            rm -f validation_output.tmp
+          fi
+          echo "" >> feedback.md
+
+      - name: Analyze HTML code quality
+        run: |
+          echo "## Analyse de la qualité du code :" >> feedback.md
+          echo "" >> feedback.md
+          
+          html_files=$(find . -name "*.html" -not -path "./.git/*")
+          
+          for file in $html_files; do
+            echo "### 📄 Analyse de \`$file\` :" >> feedback.md
+            echo "" >> feedback.md
+            
+            # Points forts
+            echo "#### ✅ **Points forts détectés** :" >> feedback.md
+            
+            # Vérifier DOCTYPE
+            if grep -q "<!DOCTYPE html>" "$file"; then
+              echo "- ✅ Déclaration DOCTYPE HTML5 présente" >> feedback.md
+            fi
+            
+            # Vérifier lang
+            if grep -q '<html.*lang=' "$file"; then
+              echo "- ✅ Attribut lang défini pour l'accessibilité" >> feedback.md
+            fi
+            
+            # Vérifier charset
+            if grep -q 'charset=' "$file"; then
+              echo "- ✅ Encodage de caractères spécifié" >> feedback.md
+            fi
+            
+            # Vérifier viewport
+            if grep -q 'viewport' "$file"; then
+              echo "- ✅ Meta viewport présent (responsive design)" >> feedback.md
+            fi
+            
+            # Vérifier balises sémantiques
+            semantic_tags=("header" "main" "footer" "nav" "section" "article" "aside")
+            for tag in "${semantic_tags[@]}"; do
+              if grep -q "<$tag" "$file"; then
+                echo "- ✅ Utilisation de balises sémantiques (\`<$tag>\`)" >> feedback.md
+              fi
+            done
+            
+            # Vérifier structure de base
+            if grep -q "<title>" "$file"; then
+              echo "- ✅ Titre de page défini" >> feedback.md
+            fi
+            
+            echo "" >> feedback.md
+            
+            # Points à améliorer
+            echo "#### ⚠️ **Points à améliorer** :" >> feedback.md
+            
+            issues_found=false
+            
+            # Vérifier images sans alt
+            if grep -q '<img' "$file" && ! grep -q '<img[^>]*alt=' "$file"; then
+              echo "- ⚠️ Images sans attribut alt détectées" >> feedback.md
+              issues_found=true
+            fi
+            
+            # Vérifier balises obsolètes
+            obsolete_tags=("font" "center" "b" "i" "u")
+            for tag in "${obsolete_tags[@]}"; do
+              if grep -q "<$tag" "$file"; then
+                echo "- ⚠️ Balise obsolète détectée : \`<$tag>\` (utiliser CSS à la place)" >> feedback.md
+                issues_found=true
+              fi
+            done
+            
+            # Vérifier styles inline
+            if grep -q 'style=' "$file"; then
+              echo "- ⚠️ Styles inline détectés (considérer l'externalisation CSS)" >> feedback.md
+              issues_found=true
+            fi
+            
+            # Vérifier liens sans title ou texte descriptif
+            if grep -q '<a.*href.*>' "$file"; then
+              if ! grep -q '<a.*title=' "$file"; then
+                echo "- ℹ️ Considérer l'ajout d'attributs title aux liens pour l'accessibilité" >> feedback.md
+                issues_found=true
+              fi
+            fi
+            
+            if [ "$issues_found" = false ]; then
+              echo "- ✅ Aucun problème majeur détecté dans ce fichier !" >> feedback.md
+            fi
+            
+            echo "" >> feedback.md
+          done
+
+      - name: Check for alt attributes in images
+        run: |
+          echo "## Vérification détaillée des images :" >> feedback.md
+          echo "" >> feedback.md
+          
+          # Chercher les images dans les fichiers HTML
+          html_files=$(find . -name "*.html" -not -path "./.git/*")
+          images_found=false
+          
+          for file in $html_files; do
+            if grep -q '<img' "$file" 2>/dev/null; then
+              images_found=true
+              echo "🖼️ **Images dans $file** :" >> feedback.md
+              
+              # Extraire toutes les balises img
+              grep -o '<img[^>]*>' "$file" | while IFS= read -r img_tag; do
+                if echo "$img_tag" | grep -q 'alt='; then
+                  echo "  ✅ Image avec attribut alt : \`$img_tag\`" >> feedback.md
+                else
+                  echo "  ❌ **Image sans attribut alt** : \`$img_tag\`" >> feedback.md
+                  echo "    💡 **Suggestion** : Ajouter \`alt=\"Description de l'image\"\`" >> feedback.md
+                fi
+              done
+              echo "" >> feedback.md
+            fi
+          done
+          
+          if [ "$images_found" = false ]; then
+            echo "ℹ️ Aucune image trouvée dans les fichiers HTML." >> feedback.md
+          fi
+          echo "" >> feedback.md
+
+      - name: Generate personalized recommendations  
+        run: |
+          echo "## 💡 Recommandations personnalisées :" >> feedback.md
+          echo "" >> feedback.md
+          echo "### Actions prioritaires :" >> feedback.md
+          
+          html_files=$(find . -name "*.html" -not -path "./.git/*")
+          priority_actions=false
+          
+          for file in $html_files; do
+            if grep -q '<img' "$file" && ! grep -q 'alt=' "$file"; then
+              echo "- ♿ **Urgent** : Ajouter des attributs \`alt\` aux images dans \`$file\`" >> feedback.md
+              priority_actions=true
+            fi
+            
+            if ! grep -q 'viewport' "$file"; then
+              echo "- 📱 **Recommandé** : Ajouter la meta viewport dans \`$file\` pour le responsive" >> feedback.md
+              priority_actions=true
+            fi
+          done
+          
+          if [ "$priority_actions" = false ]; then
+            echo "✅ Aucune action prioritaire nécessaire !" >> feedback.md
+          fi
+          echo "" >> feedback.md
+
+      - name: Add pedagogical feedback with code examples
+        run: |
+          cat >> feedback.md << 'EOF'
+          ## 📚 Conseils pédagogiques avec exemples de code :
+          
+          ### 🔧 **Solutions aux erreurs courantes** :
+          
+          #### Balises non fermées
+          ```html
+          <!-- ❌ Problème -->
+          <p>Texte sans fermeture
+          
+          <!-- ✅ Solution -->
+          <p>Texte avec fermeture correcte</p>
+          ```
+          
+          #### Images sans attribut alt
+          ```html
+          <!-- ❌ Problème -->
+          <img src="image.jpg">
+          
+          <!-- ✅ Solution -->
+          <img src="image.jpg" alt="Description claire de l'image">
+          ```
+          
+          #### Structure sémantique améliorée
+          ```html
+          <!-- ❌ Peu sémantique -->
+          <div class="header">
+            <div class="title">Mon Site</div>
+          </div>
+          
+          <!-- ✅ Structure sémantique -->
+          <header>
+            <h1>Mon Site</h1>
+          </header>
+          ```
+          
+          ### 💡 **Bonnes pratiques recommandées** :
+          
+          - **Toujours** inclure un DOCTYPE HTML5
+          - **Toujours** spécifier l'attribut `lang` sur la balise `<html>`
+          - **Toujours** ajouter des attributs `alt` descriptifs aux images
+          - **Utiliser** des balises sémantiques (`<header>`, `<main>`, `<footer>`, etc.)
+          - **Éviter** les balises obsolètes (`<font>`, `<center>`, etc.)
+          - **Séparer** le contenu (HTML) de la présentation (CSS)
+          
+          EOF
+
+      - name: Commit feedback
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add feedback.md
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Add automated feedback"
+            git push
+          fi
