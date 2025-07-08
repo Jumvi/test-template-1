@@ -380,6 +380,262 @@ jobs:
           fi
           echo "" >> feedback.md
 
+      - name: Pedagogical evaluation and grading
+        run: |
+          echo "# 🎓 Évaluation Pédagogique - Exercice Norman Borlaug" >> feedback.md
+          echo "" >> feedback.md
+          echo "## 📋 Analyse du travail rendu :" >> feedback.md
+          echo "" >> feedback.md
+          
+          html_files=$(find . -name "*.html" -not -path "./.git/*")
+          total_score=0
+          
+          for file in $html_files; do
+            echo "### 📄 Évaluation de \`$file\` :" >> feedback.md
+            echo "" >> feedback.md
+            
+            # Compter les lignes de code
+            line_count=$(wc -l < "$file")
+            echo "📏 **Nombre de lignes de code :** $line_count lignes" >> feedback.md
+            echo "" >> feedback.md
+            
+            # Vérifier les contraintes de longueur
+            if [ "$line_count" -lt 30 ]; then
+              echo "⚠️ **Attention :** Travail incomplet (moins de 30 lignes). Note limitée à 6/12 maximum." >> feedback.md
+              max_score=6
+            elif [ "$line_count" -gt 80 ]; then
+              echo "ℹ️ **Information :** Code très long (plus de 80 lignes). Vérifiez la concision." >> feedback.md
+              max_score=12
+            else
+              echo "✅ **Longueur appropriée :** Respect des contraintes (30-80 lignes)." >> feedback.md
+              max_score=12
+            fi
+            echo "" >> feedback.md
+            
+            # CRITÈRE 1: Structure HTML (/3 points)
+            structure_score=0
+            echo "### 🏗️ **Critère 1 : Structure HTML** (/3 points)" >> feedback.md
+            echo "" >> feedback.md
+            
+            if grep -q "<header>" "$file"; then
+              echo "✅ Balise \`<header>\` présente (+1 point)" >> feedback.md
+              ((structure_score++))
+            else
+              echo "❌ Balise \`<header>\` manquante (0 point)" >> feedback.md
+            fi
+            
+            if grep -q "<main>" "$file"; then
+              echo "✅ Balise \`<main>\` présente (+1 point)" >> feedback.md
+              ((structure_score++))
+            else
+              echo "❌ Balise \`<main>\` manquante (0 point)" >> feedback.md
+            fi
+            
+            if grep -q "<footer>" "$file"; then
+              echo "✅ Balise \`<footer>\` présente (+1 point)" >> feedback.md
+              ((structure_score++))
+            else
+              echo "❌ Balise \`<footer>\` manquante (0 point)" >> feedback.md
+            fi
+            
+            echo "**Score Structure HTML : $structure_score/3**" >> feedback.md
+            echo "" >> feedback.md
+            
+            # CRITÈRE 2: Éléments requis (/3 points)
+            elements_score=0
+            echo "### 🎯 **Critère 2 : Éléments requis de l'exercice** (/3 points)" >> feedback.md
+            echo "" >> feedback.md
+            
+            # Vérifier figure + figcaption
+            if grep -q "<figure>" "$file" && grep -q "<figcaption>" "$file"; then
+              echo "✅ Image avec légende (\`<figure>\` + \`<figcaption>\`) (+1 point)" >> feedback.md
+              ((elements_score++))
+            else
+              echo "❌ Image avec légende manquante (\`<figure>\` + \`<figcaption>\`) (0 point)" >> feedback.md
+            fi
+            
+            # Vérifier liste
+            if grep -q "<ul>" "$file" || grep -q "<ol>" "$file"; then
+              echo "✅ Liste d'accomplissements présente (\`<ul>\` ou \`<ol>\`) (+1 point)" >> feedback.md
+              ((elements_score++))
+            else
+              echo "❌ Liste d'accomplissements manquante (0 point)" >> feedback.md
+            fi
+            
+            # Vérifier blockquote + lien
+            blockquote_present=$(grep -q "<blockquote>" "$file" && echo "true" || echo "false")
+            link_present=$(grep -q "<a.*href.*>" "$file" && echo "true" || echo "false")
+            
+            if [ "$blockquote_present" = "true" ] && [ "$link_present" = "true" ]; then
+              echo "✅ Citation (\`<blockquote>\`) et lien externe présents (+1 point)" >> feedback.md
+              ((elements_score++))
+            else
+              echo "❌ Citation ou lien externe manquant (0 point)" >> feedback.md
+              if [ "$blockquote_present" = "false" ]; then
+                echo "  - Citation \`<blockquote>\` manquante" >> feedback.md
+              fi
+              if [ "$link_present" = "false" ]; then
+                echo "  - Lien externe manquant" >> feedback.md
+              fi
+            fi
+            
+            echo "**Score Éléments requis : $elements_score/3**" >> feedback.md
+            echo "" >> feedback.md
+            
+            # CRITÈRE 3: Balises sémantiques (/3 points)
+            semantic_score=0
+            echo "### 🏷️ **Critère 3 : Balises sémantiques** (/3 points)" >> feedback.md
+            echo "" >> feedback.md
+            
+            semantic_count=0
+            if grep -q "<section>" "$file"; then
+              echo "✅ Utilisation de \`<section>\`" >> feedback.md
+              ((semantic_count++))
+            fi
+            if grep -q "<article>" "$file"; then
+              echo "✅ Utilisation de \`<article>\`" >> feedback.md
+              ((semantic_count++))
+            fi
+            if grep -q "<nav>" "$file"; then
+              echo "✅ Utilisation de \`<nav>\`" >> feedback.md
+              ((semantic_count++))
+            fi
+            if grep -q "<aside>" "$file"; then
+              echo "✅ Utilisation de \`<aside>\`" >> feedback.md
+              ((semantic_count++))
+            fi
+            
+            # Attribution des points selon le nombre de balises sémantiques
+            if [ "$semantic_count" -ge 3 ]; then
+              semantic_score=3
+              echo "**Excellent usage des balises sémantiques (+3 points)**" >> feedback.md
+            elif [ "$semantic_count" -eq 2 ]; then
+              semantic_score=2
+              echo "**Bon usage des balises sémantiques (+2 points)**" >> feedback.md
+            elif [ "$semantic_count" -eq 1 ]; then
+              semantic_score=1
+              echo "**Usage basique des balises sémantiques (+1 point)**" >> feedback.md
+            else
+              semantic_score=0
+              echo "❌ **Aucune balise sémantique avancée détectée (0 point)**" >> feedback.md
+              echo "💡 Suggestion : Utilisez \`<section>\`, \`<article>\`, \`<nav>\`, \`<aside>\`" >> feedback.md
+            fi
+            
+            echo "**Score Balises sémantiques : $semantic_score/3**" >> feedback.md
+            echo "" >> feedback.md
+            
+            # CRITÈRE 4: Validation HTML (/3 points)
+            validation_score=0
+            echo "### ✅ **Critère 4 : Validation HTML** (/3 points)" >> feedback.md
+            echo "" >> feedback.md
+            
+            # Vérifier avec html-validate
+            if command -v html-validate >/dev/null 2>&1; then
+              if html-validate "$file" > validation_check.tmp 2>&1; then
+                if [ ! -s validation_check.tmp ]; then
+                  validation_score=3
+                  echo "✅ **Code HTML parfaitement valide (+3 points)**" >> feedback.md
+                else
+                  # Compter les erreurs
+                  error_count=$(grep -c "error" validation_check.tmp 2>/dev/null || echo "0")
+                  if [ "$error_count" -le 2 ]; then
+                    validation_score=2
+                    echo "⚠️ **Quelques erreurs mineures (+2 points)**" >> feedback.md
+                  elif [ "$error_count" -le 5 ]; then
+                    validation_score=1
+                    echo "⚠️ **Plusieurs erreurs à corriger (+1 point)**" >> feedback.md
+                  else
+                    validation_score=0
+                    echo "❌ **Nombreuses erreurs de validation (0 point)**" >> feedback.md
+                  fi
+                fi
+              else
+                validation_score=0
+                echo "❌ **Erreurs critiques de validation (0 point)**" >> feedback.md
+              fi
+              rm -f validation_check.tmp
+            else
+              validation_score=2
+              echo "ℹ️ **Validation basique effectuée (+2 points)**" >> feedback.md
+            fi
+            
+            echo "**Score Validation HTML : $validation_score/3**" >> feedback.md
+            echo "" >> feedback.md
+            
+            # CALCUL DE LA NOTE FINALE
+            total_score=$((structure_score + elements_score + semantic_score + validation_score))
+            
+            # Appliquer la limitation si moins de 30 lignes
+            if [ "$total_score" -gt "$max_score" ]; then
+              total_score=$max_score
+            fi
+            
+            echo "## 🔎 **Résumé des points obtenus :**" >> feedback.md
+            echo "" >> feedback.md
+            echo "| Critère | Points obtenus | Points max |" >> feedback.md
+            echo "|---------|----------------|------------|" >> feedback.md
+            echo "| Structure HTML | $structure_score | 3 |" >> feedback.md
+            echo "| Éléments requis | $elements_score | 3 |" >> feedback.md
+            echo "| Balises sémantiques | $semantic_score | 3 |" >> feedback.md
+            echo "| Validation HTML | $validation_score | 3 |" >> feedback.md
+            echo "| **TOTAL** | **$total_score** | **12** |" >> feedback.md
+            echo "" >> feedback.md
+            
+            # STATUT DE VALIDATION
+            if [ "$line_count" -lt 30 ]; then
+              echo "## 📋 **Statut du travail :** ❌ NON VALIDÉ" >> feedback.md
+              echo "**Raison :** Travail incomplet (moins de 30 lignes requises)" >> feedback.md
+            elif [ "$total_score" -ge 8 ]; then
+              echo "## 📋 **Statut du travail :** ✅ VALIDÉ" >> feedback.md
+              echo "**Félicitations !** Votre travail respecte les consignes de l'exercice." >> feedback.md
+            else
+              echo "## 📋 **Statut du travail :** ⚠️ À AMÉLIORER" >> feedback.md
+              echo "**Note insuffisante.** Veuillez corriger les points mentionnés ci-dessus." >> feedback.md
+            fi
+            echo "" >> feedback.md
+            
+            # FEEDBACK PÉDAGOGIQUE PERSONNALISÉ
+            echo "## 💬 **Feedback pédagogique :**" >> feedback.md
+            echo "" >> feedback.md
+            
+            if [ "$total_score" -ge 10 ]; then
+              echo "🎉 **Excellent travail !** Vous maîtrisez bien les concepts HTML de base." >> feedback.md
+            elif [ "$total_score" -ge 8 ]; then
+              echo "👍 **Bon travail !** Quelques améliorations mineures à apporter." >> feedback.md
+            elif [ "$total_score" -ge 6 ]; then
+              echo "📚 **Travail correct** mais il y a des éléments importants à revoir." >> feedback.md
+            else
+              echo "📖 **Travail à refaire.** Relisez attentivement les consignes de l'exercice." >> feedback.md
+            fi
+            echo "" >> feedback.md
+            
+            # Suggestions d'amélioration
+            echo "### 💡 **Suggestions d'amélioration prioritaires :**" >> feedback.md
+            echo "" >> feedback.md
+            
+            if [ "$structure_score" -lt 3 ]; then
+              echo "- 🏗️ **Structure HTML :** Ajoutez les balises manquantes (\`<header>\`, \`<main>\`, \`<footer>\`)" >> feedback.md
+            fi
+            
+            if [ "$elements_score" -lt 3 ]; then
+              echo "- 🎯 **Éléments manquants :** Relisez les consignes et ajoutez tous les éléments requis" >> feedback.md
+            fi
+            
+            if [ "$semantic_score" -lt 2 ]; then
+              echo "- 🏷️ **Balises sémantiques :** Utilisez \`<section>\`, \`<article>\` pour structurer votre contenu" >> feedback.md
+            fi
+            
+            if [ "$validation_score" -lt 2 ]; then
+              echo "- ✅ **Validation :** Corrigez les erreurs HTML détectées ci-dessus" >> feedback.md
+            fi
+            
+            if [ "$line_count" -lt 30 ]; then
+              echo "- 📏 **Contenu :** Ajoutez plus de contenu pour atteindre au moins 30 lignes" >> feedback.md
+            fi
+            
+          done
+          echo "" >> feedback.md
+
       - name: Add pedagogical feedback with code examples
         run: |
           cat >> feedback.md << 'EOF'
