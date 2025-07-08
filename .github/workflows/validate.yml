@@ -567,7 +567,7 @@ jobs:
               semantic_count=$((semantic_count + 1))
             fi
             
-            # Attribution des points (peut être négatif)
+            # Attribution des points
             if [ "$semantic_count" -ge 3 ]; then
               semantic_score=3
               echo "**Excellent usage des balises sémantiques (+3 points)**" >> feedback.md
@@ -577,14 +577,9 @@ jobs:
             elif [ "$semantic_count" -eq 1 ]; then
               semantic_score=1
               echo "**Usage basique des balises sémantiques (+1 point)**" >> feedback.md
-            elif [ "$semantic_count" -eq 0 ]; then
-              semantic_score=0
-              echo "❌ **Aucune balise sémantique correcte détectée (0 point)**" >> feedback.md
             else
-              # Score négatif possible
-              semantic_score=0  # Minimum 0, même si logiquement négatif
-              echo "❌ **Mauvais usage des balises sémantiques (0 point)**" >> feedback.md
-              echo "⚠️ **Attention :** Utilisation incorrecte pénalisante détectée" >> feedback.md
+              semantic_score=0
+              echo "❌ **Aucune balise sémantique avancée détectée (0 point)**" >> feedback.md
             fi
             
             {
