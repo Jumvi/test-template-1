@@ -9,37 +9,26 @@
 ```
 
 /home/runner/work/test-template-1/test-template-1/index.html
-  22:8  error  Element <p> is implicitly closed by adjacent <h2>  no-implicit-close
-  25:9  error  Raw ">" must be encoded as "&gt;"                  no-raw-characters
+  26:1  error  Trailing whitespace  no-trailing-whitespace
 
-✖ 2 problems (2 errors, 0 warnings)
+✖ 1 problem (1 error, 0 warnings)
 
 More information:
-  https://html-validate.org/rules/no-implicit-close.html
-  https://html-validate.org/rules/no-raw-characters.html
+  https://html-validate.org/rules/no-trailing-whitespace.html
 
 ```
-❌ **Plusieurs erreurs de validation détectées** (Score: 1/3)
-Votre code contient 4 erreur(s).
+⚠️ **Quelques erreurs de validation détectées** (Score: 2/3)
+Votre code contient 2 erreur(s).
 
 ## 🔧 Solutions aux erreurs de validation détectées :
 
-### 🔗 **Erreur de structure : Balise `<p>` non fermée**
+### 🧹 **Problème de formatage : Espaces en fin de ligne**
 
-**Problème détecté :** Balise `<p>` ouverte mais pas fermée correctement
+**Problème détecté :** Espaces inutiles à la fin des lignes
 
-**Solution :** Ajouter la balise de fermeture `</p>`
-```html
-<!-- ❌ Erreur -->
-<p>
-  Votre texte...
-<!-- Pas de fermeture -->
-
-<!-- ✅ Correction -->
-<p>
-  Votre texte...
-</p>
-```
+**Solution :** Supprimer les espaces en fin de ligne
+- Dans VS Code : Rechercher avec regex `[[:space:]]+$` et remplacer par rien
+- Ou configurer VS Code pour supprimer automatiquement les espaces
 
 
 ## Analyse de la qualité du code :
@@ -82,7 +71,7 @@ Votre code contient 4 erreur(s).
 
 ### 📄 Évaluation de `./index.html` :
 
-📏 **Nombre de lignes de code :** 47 lignes
+📏 **Nombre de lignes de code :** 48 lignes
 
 ✅ **Longueur appropriée :** Respect des contraintes (30-80 lignes).
 
@@ -97,13 +86,14 @@ Votre code contient 4 erreur(s).
 
 ✅ Image avec légende (`<figure>` + `<figcaption>`) (+1 point)
 ✅ Liste d'accomplissements présente (`<ul>` ou `<ol>`) (+1 point)
-✅ Citation (`<blockquote>` ou `<cite>`  ) et lien externe présents (+1 point)
+✅ Citation (`<blockquote>`) et lien externe présents (+1 point)
 **Score Éléments requis : 3/3**
 
 ### 🏷️ **Critère 3 : Balises sémantiques** (/3 points)
 
-❌ **Aucune balise sémantique avancée détectée (0 point)**
-**Score Balises sémantiques : 0/3**
+✅ Excellente utilisation de `<section>` avec titres hiérarchiques
+**Excellent usage des balises sémantiques (+3 points)**
+**Score Balises sémantiques : 3/3**
 
 ### ✅ **Critère 4 : Validation HTML** (/3 points)
 
@@ -116,9 +106,9 @@ Votre code contient 4 erreur(s).
 |---------|----------------|------------|
 | Structure HTML | 3 | 3 |
 | Éléments requis | 3 | 3 |
-| Balises sémantiques | 0 | 3 |
+| Balises sémantiques | 3 | 3 |
 | Validation HTML | 2 | 3 |
-| **TOTAL** | **8** | **12** |
+| **TOTAL** | **11** | **12** |
 
 ## 📋 **Statut du travail :** ✅ VALIDÉ
 **Félicitations !** Votre travail respecte les consignes de l'exercice.
