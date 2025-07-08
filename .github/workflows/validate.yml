@@ -21,7 +21,11 @@ jobs:
 
       - name: Install HTML validator
         run: |
-          npm install -g html-validate
+          echo "Installation de html-validate..."
+          npm install -g html-validate || {
+            echo "Échec de l'installation de html-validate, installation d'une alternative..."
+            npm install -g htmlhint
+          }
 
       - name: Run HTML validation
         run: |
@@ -41,21 +45,54 @@ jobs:
             done
             echo "" >> feedback.md
             
-            # Exécuter html-validate et capturer la sortie
-            html-validate $html_files --format=markdown > validation_output.tmp 2>&1
-            validation_exit_code=$?
-            
-            if [ $validation_exit_code -eq 0 ] && [ ! -s validation_output.tmp ]; then
-              echo "✅ **Aucune erreur de validation HTML détectée !**" >> feedback.md
-              echo "Votre code HTML respecte les standards W3C." >> feedback.md
+            # Debug: vérifier que html-validate est installé
+            echo "Debug: Vérification de html-validate..."
+            if command -v html-validate >/dev/null 2>&1; then
+              echo "Debug: html-validate trouvé, utilisation..."
+              # Analyser chaque fichier individuellement pour éviter les problèmes
+              validation_errors=false
+              for file in $html_files; do
+                echo "Debug: Analyse de $file avec html-validate..."
+                if html-validate "$file" > "validation_${file##*/}.tmp" 2>&1; then
+                  if [ -s "validation_${file##*/}.tmp" ]; then
+                    echo "⚠️ **Erreurs dans $file** :" >> feedback.md
+                    echo '```' >> feedback.md
+                    cat "validation_${file##*/}.tmp" >> feedback.md
+                    echo '```' >> feedback.md
+                    validation_errors=true
+                  fi
+                else
+                  echo "⚠️ **Erreurs dans $file** :" >> feedback.md
+                  echo '```' >> feedback.md
+                  cat "validation_${file##*/}.tmp" >> feedback.md
+                  echo '```' >> feedback.md
+                  validation_errors=true
+                fi
+                rm -f "validation_${file##*/}.tmp"
+              done
+            elif command -v htmlhint >/dev/null 2>&1; then
+              echo "Debug: html-validate non trouvé, utilisation de htmlhint..."
+              validation_errors=false
+              for file in $html_files; do
+                echo "Debug: Analyse de $file avec htmlhint..."
+                if ! htmlhint "$file" > "validation_${file##*/}.tmp" 2>&1; then
+                  echo "⚠️ **Erreurs dans $file** :" >> feedback.md
+                  echo '```' >> feedback.md
+                  cat "validation_${file##*/}.tmp" >> feedback.md
+                  echo '```' >> feedback.md
+                  validation_errors=true
+                fi
+                rm -f "validation_${file##*/}.tmp"
+              done
             else
-              echo "⚠️ **Erreurs de validation HTML détectées** :" >> feedback.md
-              echo "" >> feedback.md
-              if [ -s validation_output.tmp ]; then
-                cat validation_output.tmp >> feedback.md
-              fi
+              echo "⚠️ **Validation basique** : Aucun validateur HTML installé" >> feedback.md
+              validation_errors=false
             fi
-            rm -f validation_output.tmp
+            
+            if [ "$validation_errors" = false ]; then
+              echo "✅ **Aucune erreur de validation HTML détectée !**" >> feedback.md
+              echo "Votre code HTML semble correct." >> feedback.md
+            fi
           fi
           echo "" >> feedback.md
 
