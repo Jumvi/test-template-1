@@ -1,11 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <title>Hommage à Nelson Mandela</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Hello World</h1>
+
+  <!-- En-tête -->
+  <header>
+    <h1>Nelson Mandela</h1>
+    <p>Un symbole mondial de la paix et de la liberté</p>
+  </header>
+
+  <!-- Section principale -->
+  <main>
+    <figure>
+      <img src="image.jpg"> <!-- 🔴 Erreur : pas d’attribut alt -->
+      <figcaption>Nelson Mandela en 2008</figcaption>
+    </figure>
+
+    <section>
+      <p>
+        Nelson Mandela fut un homme politique emblématique, connu pour sa lutte contre l'apartheid.
+      <!-- 🔴 Erreur : balise <p> non fermée -->
+
+      <h2>Accomplissements majeurs :</h2>
+      <ul>
+        <li>Prix Nobel de la paix en 1993
+        <li>Premier président noir d'Afrique du Sud</li>
+        <!-- 🔴 Erreur : un <li> sans fermeture explicite -->
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <blockquote>
+      "Être libre, ce n'est pas seulement se débarrasser de ses chaînes..." – Nelson Mandela
+    </blockquote>
+    <p>
+      En savoir plus sur <a href="https://fr.wikipedia.org/wiki/Nelson_Mandela">Wikipedia</a>.
+    </p>
+  </footer>
+
 </body>
 </html>
