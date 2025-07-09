@@ -5,13 +5,31 @@
 📁 **Fichiers HTML analysés** :
 - ./index.html
 
-❌ **Plusieurs erreurs de validation détectées** (Score: 1/3)
-Votre code contient  erreur(s).
+⚠️ **Erreurs dans ./index.html** :
+```
+
+/home/runner/work/test-template-1/test-template-1/index.html
+  26:1  error  Trailing whitespace  no-trailing-whitespace
+
+✖ 1 problem (1 error, 0 warnings)
+
+More information:
+  https://html-validate.org/rules/no-trailing-whitespace.html
+
+```
+⚠️ **Quelques erreurs de validation détectées** (Score: 2/3)
+Votre code contient 2 erreur(s).
 
 ## 🔧 Solutions aux erreurs de validation détectées :
 
-✅ **Aucune erreur de validation spécifique détectée !**
-Votre code HTML semble bien structuré.
+### 🧹 **Problème de formatage : Espaces en fin de ligne**
+
+**Problème détecté :** Espaces inutiles à la fin des lignes
+
+**Solution :** Supprimer les espaces en fin de ligne
+- Dans VS Code : Rechercher avec regex `[[:space:]]+$` et remplacer par rien
+- Ou configurer VS Code pour supprimer automatiquement les espaces
+
 
 ## Analyse de la qualité du code :
 
@@ -53,7 +71,7 @@ Votre code HTML semble bien structuré.
 
 ### 📄 Évaluation de `./index.html` :
 
-📏 **Nombre de lignes de code :** 46 lignes
+📏 **Nombre de lignes de code :** 47 lignes
 
 ✅ **Longueur appropriée :** Respect des contraintes (30-80 lignes).
 
